@@ -1,0 +1,127 @@
+import pygame, sys
+"小鸟类"
+class Bird:
+    "初始化方法"
+    def __init__(self):
+        self.birdRect = pygame.Rect(250, 300, 45, 45)#调用Rect方法，将bird图片外边加一个矩形框，65,50是矩形所在的指标，45,45是长和宽
+        self.birdStatus = [pygame.image.load(r"D:\flappybire\bird1.png"),
+                           pygame.image.load(r"D:\flappybire\bird2.png"),
+                           pygame.image.load(r"D:\flappybire\bird3.png")]
+        #这个表单存储的是bird的状态图
+        self.statu = 0#定一个状态变量，默认为0 ，也就是表单中第一幅图
+        self.birdX = 250#bird出场的横坐标
+        self.birdY = 300#bird出场的纵坐标
+        self.jump = False#默认bird没有跳跃
+        self.jumpHeight = 10#向上跳跃一次的初始高度
+        self.down = 5#默认情况下bird以5的速度向下掉
+        self.dead = False#默认bird没有死
+    "移动方法"
+    def MoveBird(self):
+        if self.jump:#如果self.jump=True，说明要跳跃，进行下列操作
+            self.jumpHeight -= 1#为使bird飞到越高就越难飞，所以进行减一
+            self.birdY -= self.jumpHeight#更新高度，因为向下是正方向，所以要向上就-
+        else:
+            self.down += 0.2#实现越向下掉，就掉的越快
+            self.birdY += self.down#更新高度
+        self.birdRect[1] = self.birdY#让bird外面的边框所在纵坐标，伴随bird图片一起变化
+
+"管道类"
+class Pipline:
+    "初始化方法"
+    def __init__(self):
+        self.wallX = 700#默认将管道放在距离左边缘700像素处
+        self.pineTop = pygame.image.load(r"D:\flappybire\pipe2.png")
+        #导入上管道图像
+        self.pineBottom = pygame.image.load(r"D:\flappybire\pipe1.png")
+        # 导入下管道图像
+    "移动方法"
+    def updatePipline(self):
+        self.wallX -= 5#管道图像以5/time像素的速度向左移动
+        if self.wallX < 40:#管道距左边缘<40时
+            self.wallX = 700#重置管道，是它出现在初始位置
+            global score#声明score为全局变量是它可以在类内使用
+            score += 1#分数加一
+"检查bird死亡：当bird的外边缘举行框与管道外边缘矩形框，或者上下边缘接触就死亡"
+def checkDead():
+    topRect = pygame.Rect(pipline.wallX, -100, pipline.pineTop.get_width(), pipline.pineTop.get_height())
+    #定义上管道矩形框Rect(x,y,width,height)
+    bottomRect = pygame.Rect(pipline.wallX, 500, pipline.pineBottom.get_width(), pipline.pineBottom.get_height())
+    # 定义下管道矩形框
+    if topRect.colliderect(bird.birdRect) or bottomRect.colliderect(bird.birdRect):
+        #通过topRect.colliderect(bird.birdRect)判断topRect矩形框与birdRect矩形框有没有相接触
+        bird.dead = True#接触了，bird就死了
+        return True
+    if not 0 < bird.birdRect[1] < height:
+        #如果bird矩形框不再0到屏幕高度height直接，说明鸟已经跑出屏幕了
+        bird.dead =True#鸟死了
+        return True#返回True，说明鸟死了
+    else:
+        return False#返回Flase，说明鸟没有死
+    "打印游戏结束后的界面"
+def getResult():
+    final_txt1 = "Game Over!"#输出的文本内容
+    final_txt2 = "Your final score is :" + str(score)#为实现字段相接，所以要将score转化成str型
+    pygame.font.SysFont("Arial", 70)#设置文本格式，Arial是字体样式，60是字号大小
+    ft1 = font.render(final_txt1, 1, (222, 45, 2))#对final_txt1进行修饰粉刷，render(目标文本, 是否光滑, 颜色)
+    pygame.font.SysFont("Arial", 60)#重新置文本格式
+    ft2 = font.render(final_txt2, 1, (166, 222, 46))#1代表要光滑，(166, 222, 46)是gbk颜色表示
+    screen.blit(ft1, [screen.get_width() / 2 - ft1.get_width() / 2, 100])
+    #在屏幕上将文本内容展示出来blit(修饰后的文本, 坐标)
+    screen.blit(ft2, [screen.get_width() / 2 - ft2.get_width() / 2, 200])
+    #screen.get_width() / 2 - ft2.get_width() / 2   获取(屏幕宽度/2-文本宽度/2)实现水平居中
+    pygame.display.update()#对屏幕进行刷新
+
+def creativeMap():#创建背景
+    screen.blit(backgroud, (0, 0))#添加背景图
+    "显示管道"
+    screen.blit(pipline.pineTop, (pipline.wallX, -100))#添加上管道
+    screen.blit(pipline.pineBottom, (pipline.wallX, 500))#添加下管道
+    pipline.updatePipline()#调用移动管道的函数，让管道动起来
+
+    "显示小鸟"
+    if bird.dead:#如果小鸟死了
+        bird.statu = 2#小鸟图片状态为2
+    elif bird.jump:#如果小鸟跳跃
+        bird.statu = 1#小鸟图片状态为1
+
+    screen.blit(bird.birdStatus[bird.statu], (bird.birdX, bird.birdY))#根据小鸟图片状态显示对应状态的图片
+    bird.MoveBird()#调用小鸟飞行的函数
+    "显示分数"
+    screen.blit(font.render('Score:' + str(score), -1, (255, 255, 255)), (400, 50))
+    #游戏过程也对分数进行显示
+    pygame.display.flip()
+    #当分数变化时，调用flip()函数刷新屏幕，使得分数更新显示
+"主程序"
+if __name__ == '__main__':
+    pygame.init()#初始化一个游戏界面
+    pygame.font.init()#初始化字体
+    font = pygame.font.SysFont(None, 50)#默认font为一种默认类型，字号为50的字体
+
+    size = width, height = 800, 600#设置游戏界面的尺寸
+    screen = pygame.display.set_mode(size)#以size尺寸来设置游戏界面
+    clock = pygame.time.Clock()#实例化一个时钟对象，控制图片刷新的速度
+    color = (255, 255, 255)#白色
+    bird = Bird()#实例化一个鸟类的对象
+    pipline = Pipline()#实例化一个管道类的对象
+    score = 0
+    while True:#定义一个死循环，小鸟死亡就退出
+        clock.tick(60)#每秒刷新60次
+
+        for event in pygame.event.get():#遍历pygame中所有可能的事件
+            if event.type == pygame.QUIT:#如果事件类型是pygame.QUIT就退出程序
+                sys.exit()
+            if (event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN) and not bird.dead:
+                # 如果事件类型是 按键盘  点击鼠标  并且小鸟没有死，执行以下操作
+                bird.jump = True#跳跃
+                bird.jumpHeight = 10#跳跃高度为10
+                bird.down = 5#向下落的速度为5/time
+
+        screen.fill(color)#游戏界面的底色默认填充为白色
+        backgroud = pygame.image.load(r"D:\flappybire\sky.png")
+        # 引入背景图片
+        if checkDead():#调用checkDead()检查有没有死亡，死亡就执行下个操作
+            getResult()#调用getResult()函数，打印死亡后的界面
+        else:#没有死亡
+            creativeMap()#不断根据玩家刷新游戏界面
+
+    pygame.quit()#结束程序
